@@ -1,0 +1,19 @@
+{
+  "name": "Audiobook Scraper extensions",
+  "extensions": [
+    {
+      "id": "community.audiobook-catalog",
+      "name": "Audiobook Catalog",
+      "version": "1.0.0",
+      "description": "Trending and most read books, new releases and genres for the home screen, with narrators, length and ratings.",
+      "url": "audiobook-catalog/dist/audiobook-catalog.js"
+    },
+    {
+      "id": "community.audiobook-scraper",
+      "name": "Audiobook Scraper",
+      "version": "1.1.0",
+      "description": "Finds audiobooks on public indexers and plays them through your debrid service.",
+      "url": "audiobook-scraper/dist/audiobook-scraper.js"
+    }
+  ]
+}
