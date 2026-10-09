@@ -4,9 +4,10 @@ Extensions for Shu, the audiobook player.
 
 ## Installing
 
-In Shu, open **Addons → Add addon** and paste the raw link to [`index.json`](index.json): open
-the file here on GitHub, press **Raw** and copy the address. The app lists the extensions in this
-repository and you pick the ones you want. They update themselves when a new version lands here.
+In Shu, open **Addons → Add → Extension or repository** and paste the raw link to
+[`index.json`](index.json): open the file here on GitHub, press **Raw** and copy the address. The
+app lists the extensions in this repository and you pick the ones you want. They update
+themselves when a new version lands here.
 
 To install just one, paste the raw link to its file in `dist/` instead, for example
 [`audiobook-catalog/dist/audiobook-catalog.js`](audiobook-catalog/dist/audiobook-catalog.js).
