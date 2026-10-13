@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.2.0 - 2026-10-13
+
+### New
+- Each version found for a catalog book says why it matches or doesn't: "Same narrator",
+  "Length matches", "Different narrator", "Too small for the whole book", "Possibly a
+  collection", "Different author", "Abridged"
+
+### Changed
+- Better picks for catalog books:
+  - words in a release name that aren't the title, author or narrator count against it, so
+    "Dune Messiah" no longer passes for "Dune"
+  - the catalog's narrator ranks first
+  - a size far off the book's length ranks low (samples, single parts, hidden collections)
+  - another author with the same surname, abridged readings and radio dramas rank low
+
 ## 1.1.0 - 2026-10-08
 
 ### New

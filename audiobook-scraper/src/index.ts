@@ -24,7 +24,7 @@ const extension = {
   manifest: {
     id: 'community.audiobook-scraper',
     name: 'Audiobook Scraper',
-    version: '1.1.0',
+    version: '1.2.0',
     description:
       'Finds audiobook torrents on AudioBook Bay, The Pirate Bay and the trackers Knaben indexes, and plays them through Real-Debrid, AllDebrid, TorBox or Premiumize.',
     // A source: no Home rows of its own, it finds versions of books from catalog extensions.
@@ -74,9 +74,13 @@ const extension = {
     return { books: [], hasMore: false };
   },
 
-  /** Versions of a book from a catalog extension, best match first. */
+  /** Versions of a book from a catalog extension, best match first, with why they match. */
   async releases(work: WorkQuery) {
-    return { books: (await findReleases(work)).map(toSummary), hasMore: false };
+    const books = (await findReleases(work)).map(({ release, notes }) => {
+      const summary = toSummary(release);
+      return { ...summary, tags: [...notes, ...summary.tags] };
+    });
+    return { books, hasMore: false };
   },
 
   async book(bookId: string) {

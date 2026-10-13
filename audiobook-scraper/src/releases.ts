@@ -5,7 +5,16 @@ import type { Release } from './types.ts';
 export interface WorkQuery {
   title: string;
   authors?: string[];
+  narrators?: string[];
   durationMinutes?: number;
+  year?: string;
+}
+
+/** A torrent of the book, how well it matches, and why (shown with the version in the app). */
+export interface Ranked {
+  release: Release;
+  score: number;
+  notes: string[];
 }
 
 const words = (s: string): string[] => s.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
@@ -21,51 +30,176 @@ const significant = (list: string[]) => {
 export const mainTitle = (title: string) => title.replace(/\s*[:([].*$/, '').trim() || title;
 
 const BUNDLE =
-  /\b(collection|complete|books? \d+ ?(-|to|&) ?\d+|series|omnibus|box ?set|trilogy)\b/i;
+  /\b(collection|complete|(books?|volumes?|vol) ?\d+ ?(-|to|&) ?\d+|series|omnibus|box ?set|trilogy)\b/i;
 /** RuTracker marks English audiobooks "[Английский]"; other Cyrillic titles are translations. */
 const TRANSLATED = (title: string) =>
   /\p{Script=Cyrillic}/u.test(title) && !/Английский|English/i.test(title);
 /** "Atomic Habits (Hindi Edition)", "[Spanish]", "Español": a translation, unless the book is too. */
 const LANGUAGE =
   /\b(hindi|spanish|espa[nñ]ol|french|fran[cç]ais|german|deutsch|italian|italiano|portuguese|portugu[eê]s|russian|japanese|chinese|arabic|turkish|polish|dutch|korean|svenska|norsk|dansk)\b/i;
-const NOT_THE_BOOK = /\b(summary|analysis|study guide|dramati[sz]ed|bbc radio|unofficial)\b/i;
+const NOT_THE_BOOK =
+  /\b(summary|analysis|study guide|dramati[sz]ed|radio (drama|play)|bbc radio|unofficial)\b/i;
+/** Shortened readings. "Unabridged" doesn't match: no word boundary inside it. */
+const ABRIDGED = /\b(abridged|abr)\b/i;
+
+/** Words uploaders add that say nothing about which book it is. */
+const NOISE = new Set(
+  (
+    'audiobook audiobooks audio book unabridged retail audible english eng read by narrated ' +
+    'narrator narrators performed full cast edition version mp3 m4b m4a aac flac opus ogg vbr ' +
+    'cbr kbps khz stereo mono hq rip ripped chaptered chapters chapter tagged cover part parts ' +
+    'disc disk cd cds hours hrs hr min mins art epub ebook pdf'
+  ).split(' '),
+);
+
+/** Bitrates, sample rates, sizes, years and running times: not words of a title. */
+const MEASURES =
+  /\b\d+(\.\d+)?\s?(k|kbps|kb\/s|khz|mb|gb|mib|gib|h|hrs?|hours?|m|mins?|minutes?)\b|\b(19|20)\d\d\b/gi;
 
 /**
- * How well a torrent matches the book: it must contain every word of the title, and the
- * author's last name when known. Single books beat collections; summaries and dramatizations
- * come last. Higher is better; 0 means no match.
+ * Words of the torrent name that nothing explains: not the title (subtitle and series
+ * included), the authors, the narrators or the usual format words. "Messiah" in "Dune Messiah"
+ * is one, so the sequel ranks below "Dune".
  */
-export function matchScore(release: Release, work: WorkQuery): number {
-  const text = `${release.title} ${release.author ?? ''}`;
-  const have = new Set(words(text));
-  const wanted = significant(words(mainTitle(work.title)));
-  if (wanted.length === 0 || !wanted.every((w) => have.has(w))) return 0;
-  const surname = work.authors?.[0] ? words(work.authors[0]).pop() : undefined;
-  if (surname && !have.has(surname)) return 0;
-  let score = 100;
-  if (BUNDLE.test(release.title)) score -= 40;
-  if (NOT_THE_BOOK.test(release.title)) score -= 60;
-  if (TRANSLATED(release.title) && !/\p{Script=Cyrillic}/u.test(work.title)) score -= 50;
-  if (LANGUAGE.test(release.title) && !LANGUAGE.test(work.title)) score -= 50;
-  // Fewer extra words: closer to just "Author - Title".
-  score -= Math.min(words(release.title).length - wanted.length, 20);
-  return score;
+function unexplained(release: Release, work: WorkQuery): string[] {
+  const known = new Set([
+    ...words(work.title),
+    ...(work.authors ?? []).flatMap(words),
+    ...(work.authors ?? []).map(initials),
+    ...(work.narrators ?? []).flatMap(words),
+    ...words(release.author ?? ''),
+    ...words(release.narrator ?? ''),
+  ]);
+  return words(release.title.replace(MEASURES, ' ')).filter(
+    (w) => !known.has(w) && !SMALL.has(w) && !NOISE.has(w),
+  );
 }
 
-export function rankReleases(found: Release[], work: WorkQuery): Release[] {
-  const scored = found.map((r) => ({ r, score: matchScore(r, work) })).filter((x) => x.score > 0);
+const surname = (name: string) => words(name).pop();
+
+/** "J. R. R. Tolkien" → "jrr", as uploaders often write it. */
+const initials = (name: string) =>
+  words(name)
+    .filter((w) => w.length === 1)
+    .join('');
+
+/**
+ * A different person with the author's surname: "Brian Herbert" when looking for Frank Herbert.
+ * The word right before the surname is a first name nothing else explains.
+ */
+function otherAuthor(release: Release, work: WorkQuery): boolean {
+  const author = work.authors?.[0];
+  const last = author ? surname(author) : undefined;
+  if (!author || !last) return false;
+  const known = new Set([...words(author), initials(author), ...words(work.title)]);
+  const list = words(release.title);
+  const at = list.indexOf(last);
+  const before = at > 0 ? list[at - 1] : undefined;
+  // A first name is written in the same script as the surname; "[Английский] Rowling" isn't one.
+  const latin = (w: string) => /^\p{Script=Latin}+$/u.test(w);
+  if (!before || before.length <= 2 || latin(before) !== latin(last) || known.has(before)) {
+    return false;
+  }
+  // "Joanne Rowling" for "J. K. Rowling" is the same person.
+  const first = words(author)[0] ?? '';
+  return !(first.length === 1 && before.startsWith(first));
+}
+
+/** A sensible size for the book's length: 32 to 256 kbps, more for lossless. */
+function sizeRange(minutes: number, release: Release): [number, number] {
+  const seconds = minutes * 60;
+  const lossless = /\bflac\b/i.test(`${release.title} ${release.format ?? ''}`);
+  return [(seconds * 32000) / 8 / 1.25, ((seconds * (lossless ? 1400000 : 256000)) / 8) * 1.25];
+}
+
+/**
+ * How well a torrent matches the book. It must contain every word of the title, and the
+ * author's last name when known; otherwise the score is 0. Then: unexplained words, a
+ * collection, a summary or a translation cost points; the catalog's narrator and a size that
+ * fits the book's length earn some. Higher is better.
+ */
+export function assess(release: Release, work: WorkQuery): Ranked {
+  const text = `${release.title} ${release.author ?? ''} ${release.narrator ?? ''}`;
+  const have = new Set(words(text));
+  const wanted = significant(words(mainTitle(work.title)));
+  const author = work.authors?.[0] ? surname(work.authors[0]) : undefined;
+  if (wanted.length === 0 || !wanted.every((w) => have.has(w)) || (author && !have.has(author))) {
+    return { release, score: 0, notes: [] };
+  }
+  let score = 100;
+  const notes: string[] = [];
+
+  if (BUNDLE.test(release.title)) {
+    score -= 40;
+    notes.push('Possibly a collection');
+  }
+  if (NOT_THE_BOOK.test(release.title)) {
+    score -= 80;
+    notes.push('Summary or adaptation');
+  }
+  if (ABRIDGED.test(release.title)) {
+    score -= 30;
+    notes.push('Abridged');
+  }
+  if (otherAuthor(release, work)) {
+    score -= 50;
+    notes.push('Different author');
+  }
+  const translated =
+    (TRANSLATED(release.title) && !/\p{Script=Cyrillic}/u.test(work.title)) ||
+    (LANGUAGE.test(release.title) && !LANGUAGE.test(work.title));
+  if (translated) {
+    score -= 50;
+    notes.push('Translation');
+  }
+
+  // Numbers ("Book 2", "01") say less than words, so they cost less. Capped, so that a
+  // wordy name of the right book still beats a summary.
+  let extra = 0;
+  for (const w of unexplained(release, work)) extra += /^\d+$/.test(w) ? 3 : 15;
+  score -= Math.min(extra, 30);
+
+  const narrators = (work.narrators ?? []).map(surname).filter((n): n is string => !!n);
+  if (narrators.length > 0) {
+    if (narrators.some((n) => have.has(n))) {
+      score += 15;
+      notes.unshift('Same narrator');
+    } else if (release.narrator) {
+      score -= 15;
+      notes.push('Different narrator');
+    }
+  }
+
+  if (work.durationMinutes && release.size) {
+    const [low, high] = sizeRange(work.durationMinutes, release);
+    if (release.size < low) {
+      score -= 40;
+      notes.push('Too small for the whole book');
+    } else if (release.size > high) {
+      score -= 30;
+      if (!notes.includes('Possibly a collection')) notes.push('Possibly several books');
+    } else {
+      score += 10;
+      notes.push('Length matches');
+    }
+  }
+  return { release, score: Math.max(score, 1), notes };
+}
+
+export function rankReleases(found: Release[], work: WorkQuery): Ranked[] {
+  const ranked = found.map((r) => assess(r, work)).filter((x) => x.score > 0);
   const seeders = (r: Release) => r.seeders ?? Number.MAX_SAFE_INTEGER;
-  scored.sort((a, b) => b.score - a.score || seeders(b.r) - seeders(a.r));
-  return scored.map((x) => x.r);
+  ranked.sort((a, b) => b.score - a.score || seeders(b.release) - seeders(a.release));
+  return ranked;
 }
 
 /** Torrents of a catalog book, best first. */
-export async function findReleases(work: WorkQuery, limit = 15): Promise<Release[]> {
+export async function findReleases(work: WorkQuery, limit = 15): Promise<Ranked[]> {
   const title = mainTitle(work.title);
-  const surname = work.authors?.[0] ? words(work.authors[0]).pop() : undefined;
-  let found = await searchAll(surname ? `${title} ${surname}` : title);
+  const author = work.authors?.[0] ? surname(work.authors[0]) : undefined;
+  let found = await searchAll(author ? `${title} ${author}` : title);
   // Some sites only match the title; try that too when the first search finds little.
-  if (surname && rankReleases(found, work).length < 3) {
+  if (author && rankReleases(found, work).length < 3) {
     const byTitle = await searchAll(title);
     found = [...found, ...byTitle.filter((r) => !found.some((f) => f.id === r.id))];
   }

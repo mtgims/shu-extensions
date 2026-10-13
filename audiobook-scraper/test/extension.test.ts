@@ -217,7 +217,7 @@ test('releases: the book itself first, then collections, translations and summar
     work,
   );
   assert.deepEqual(
-    ranked.map((x) => x.id),
+    ranked.map((x) => x.release.id),
     ['one', 'en-ru', 'box', 'ru', 'summary'],
   );
   assert.equal(mainTitle('Dune: Deluxe Edition (Dune Chronicles, Book 1)'), 'Dune');
@@ -244,7 +244,107 @@ test('releases: translated editions rank below the original', () => {
     work,
   );
   assert.deepEqual(
-    ranked.map((r) => r.id),
+    ranked.map((r) => r.release.id),
     ['en', 'hindi', 'es'],
   );
+});
+
+test('releases: words the book does not explain push sequels down', () => {
+  const work = { title: 'Dune', authors: ['Frank Herbert'] };
+  const r = (id: string, title: string, seeders: number): Release => ({
+    id,
+    title,
+    source: 's',
+    seeders,
+  });
+  const ranked = rankReleases(
+    [
+      r('messiah', 'Frank Herbert - Dune Messiah [Unabridged]', 400),
+      r('children', 'Frank Herbert - Children of Dune (2008) MP3 64kbps', 300),
+      r('dune', 'Frank Herbert - Dune [Unabridged] [M4B 128k]', 50),
+    ],
+    work,
+  );
+  assert.deepEqual(
+    ranked.map((x) => x.release.id),
+    ['dune', 'messiah', 'children'],
+  );
+});
+
+test('releases: the catalog narrator and a fitting size win, with notes saying so', () => {
+  const work = {
+    title: "Harry Potter and the Philosopher's Stone",
+    authors: ['J. K. Rowling'],
+    narrators: ['Stephen Fry'],
+    durationMinutes: 9 * 60 + 30,
+  };
+  const mb = 1024 * 1024;
+  const r = (id: string, title: string, size: number, narrator?: string): Release => ({
+    id,
+    title,
+    source: 's',
+    seeders: 10,
+    size,
+    narrator,
+  });
+  const ranked = rankReleases(
+    [
+      r('dale', "Rowling - Harry Potter and the Philosopher's Stone", 300 * mb, 'Jim Dale'),
+      r('sample', "J.K. Rowling - Harry Potter and the Philosopher's Stone (Stephen Fry)", 20 * mb),
+      r('fry', "J.K. Rowling - Harry Potter and the Philosopher's Stone (Stephen Fry)", 280 * mb),
+      r('huge', "J.K. Rowling - Harry Potter and the Philosopher's Stone", 9000 * mb),
+    ],
+    work,
+  );
+  assert.deepEqual(
+    ranked.map((x) => x.release.id),
+    ['fry', 'dale', 'sample', 'huge'],
+  );
+  const notes = Object.fromEntries(ranked.map((x) => [x.release.id, x.notes]));
+  assert.deepEqual(notes.fry, ['Same narrator', 'Length matches']);
+  assert.deepEqual(notes.dale, ['Different narrator', 'Length matches']);
+  assert.deepEqual(notes.sample, ['Same narrator', 'Too small for the whole book']);
+  assert.deepEqual(notes.huge, ['Possibly several books']);
+});
+
+test('releases: another author with the same surname, radio dramas and volume sets rank low', () => {
+  const dune = { title: 'Dune', authors: ['Frank Herbert'], narrators: ['Scott Brick'] };
+  const r = (id: string, title: string): Release => ({ id, title, source: 's', seeders: 10 });
+  const ranked = rankReleases(
+    [
+      r('winds', 'THE WINDS OF DUNE - Brian Herbert. Scott Brick.'),
+      r('volumes', 'Dune Volumes 1 - 6 - Frank Herbert'),
+      r('dune', 'Frank Herbert - Dune'),
+    ],
+    dune,
+  );
+  assert.deepEqual(
+    ranked.map((x) => x.release.id),
+    ['dune', 'volumes', 'winds'],
+  );
+  assert.ok(ranked[2]?.notes.includes('Different author'));
+  assert.ok(ranked[1]?.notes.includes('Possibly a collection'));
+
+  const hobbit = { title: 'The Hobbit', authors: ['J.R.R. Tolkien'] };
+  const hobbits = rankReleases(
+    [
+      r('drama', 'J.R.R. Tolkien - The Hobbit - NPR Radio Drama [flac]'),
+      r('reading', 'JRR Tolkien - The Hobbit (Unabridged)'),
+      r('abridged', 'THE HOBBIT - JRR Tolkien. Read Nicol Williamson-Abr'),
+    ],
+    hobbit,
+  );
+  assert.deepEqual(
+    hobbits.map((x) => x.release.id),
+    ['reading', 'abridged', 'drama'],
+  );
+  assert.deepEqual(hobbits[0]?.notes, []);
+  assert.deepEqual(hobbits[1]?.notes, ['Abridged']);
+
+  // Initials in the catalog, the first name in the torrent: the same author.
+  const stone = rankReleases(
+    [r('joanne', "Harry Potter and the Philosopher's Stone - Joanne Rowling")],
+    { title: "Harry Potter and the Philosopher's Stone", authors: ['J. K. Rowling'] },
+  );
+  assert.deepEqual(stone[0]?.notes, []);
 });

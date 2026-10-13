@@ -11,7 +11,7 @@
     {
       "id": "community.audiobook-scraper",
       "name": "Audiobook Scraper",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "description": "Finds audiobooks on public indexers and plays them through your debrid service.",
       "url": "audiobook-scraper/dist/audiobook-scraper.js"
     }
