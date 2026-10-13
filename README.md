@@ -33,7 +33,9 @@ A source: searches public indexers for audiobooks, and optionally your own Jacke
 then plays them through a debrid service (Real-Debrid, AllDebrid, TorBox or Premiumize). You
 need an account with one of them.
 
-It finds versions of catalog books, and you can also search it directly.
+It finds versions of catalog books, and you can also search it directly. Each version says how
+well it matches the book: "Same narrator", "Length matches", or what's off, like "Different
+narrator", "Abridged" or "Possibly a collection". The best match comes first.
 
 Settings:
 
