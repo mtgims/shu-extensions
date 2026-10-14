@@ -15,6 +15,31 @@ export interface Ranked {
   release: Release;
   score: number;
   notes: string[];
+  /** How sure the match is; the app only plays a "good" one without asking. */
+  match: Match;
+}
+
+export type Match = 'good' | 'fair' | 'poor';
+
+/** Notes that are no reason for doubt. */
+const REASSURING = new Set(['Same narrator', 'Length matches']);
+/** Notes that mean it is probably not the book the catalog shows. */
+const WRONG = new Set([
+  'Summary or adaptation',
+  'Different author',
+  'Translation',
+  'Too small for the whole book',
+]);
+
+/**
+ * Good: the book itself, at most one unexplained word and nothing off. Poor: probably another
+ * book, or not this book alone (a low score, as collections get). Fair: the book with a doubt,
+ * like a different narrator, a sequel-like extra word or a noisy name.
+ */
+export function matchOf(score: number, notes: string[]): Match {
+  if (score < 60 || notes.some((n) => WRONG.has(n))) return 'poor';
+  if (score >= 90 && notes.every((n) => REASSURING.has(n))) return 'good';
+  return 'fair';
 }
 
 const words = (s: string): string[] => s.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
@@ -124,7 +149,7 @@ export function assess(release: Release, work: WorkQuery): Ranked {
   const wanted = significant(words(mainTitle(work.title)));
   const author = work.authors?.[0] ? surname(work.authors[0]) : undefined;
   if (wanted.length === 0 || !wanted.every((w) => have.has(w)) || (author && !have.has(author))) {
-    return { release, score: 0, notes: [] };
+    return { release, score: 0, notes: [], match: 'poor' };
   }
   let score = 100;
   const notes: string[] = [];
@@ -183,7 +208,8 @@ export function assess(release: Release, work: WorkQuery): Ranked {
       notes.push('Length matches');
     }
   }
-  return { release, score: Math.max(score, 1), notes };
+  const final = Math.max(score, 1);
+  return { release, score: final, notes, match: matchOf(final, notes) };
 }
 
 export function rankReleases(found: Release[], work: WorkQuery): Ranked[] {

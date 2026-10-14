@@ -348,3 +348,27 @@ test('releases: another author with the same surname, radio dramas and volume se
   );
   assert.deepEqual(stone[0]?.notes, []);
 });
+
+test('releases: only a clean match is good enough to play without asking', () => {
+  const dune = { title: 'Dune', authors: ['Frank Herbert'], narrators: ['Scott Brick'] };
+  const r = (id: string, title: string, size?: number): Release => ({
+    id,
+    title,
+    source: 's',
+    seeders: 10,
+    size,
+  });
+  const match = (title: string, work: Parameters<typeof rankReleases>[1] = dune) =>
+    rankReleases([r('x', title)], work)[0]?.match;
+  assert.equal(match('Frank Herbert - Dune [Unabridged] [M4B 128k]'), 'good');
+  assert.equal(match('Frank Herbert - Dune (read by Scott Brick)'), 'good');
+  assert.equal(match('Frank Herbert - Dune Messiah'), 'fair');
+  assert.equal(match('Dune Volumes 1 - 6 - Frank Herbert'), 'poor');
+  assert.equal(match('THE WINDS OF DUNE - Brian Herbert. Scott Brick.'), 'poor');
+  assert.equal(match('Summary of Dune by Frank Herbert'), 'poor');
+  const timed = { ...dune, durationMinutes: 21 * 60 };
+  assert.equal(
+    rankReleases([r('sample', 'Frank Herbert - Dune', 30 * 1024 * 1024)], timed)[0]?.match,
+    'poor',
+  );
+});

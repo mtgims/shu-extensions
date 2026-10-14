@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0 - 2026-10-13
+
+### New
+- Each version says how sure the match is, so the app can play a clear match right away and
+  ask which one to play when none is clear
+
 ## 1.2.0 - 2026-10-13
 
 ### New
