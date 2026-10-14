@@ -33,7 +33,10 @@ const extension = {
   manifest: {
     id: 'community.audiobook-catalog',
     name: 'Audiobook Catalog',
-    version: '1.1.0',
+    version: '1.1.1',
+    // Where copies installed from elsewhere (a computer on the same network) get updates.
+    updateUrl:
+      'https://raw.githubusercontent.com/mtgims/shu-extensions/main/audiobook-catalog/dist/audiobook-catalog.js',
     description:
       'Trending and most read books, new audiobook releases and genres, with narrators, length and ratings. Playing needs a source extension.',
     catalogs: [

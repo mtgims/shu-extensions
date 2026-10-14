@@ -1,6 +1,6 @@
 {
   "name": "audiobook-catalog-extension",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Shu extension: popular, trending and genre lists with audiobook details",
   "private": true,
   "license": "GPL-3.0-or-later",

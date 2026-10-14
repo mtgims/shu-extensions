@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 - 2026-10-14
+
+### Changed
+- Copies installed from a computer on your network now update from GitHub, keeping your
+  settings (needs Shu 0.4.1)
+
 ## 1.1.0 - 2026-10-14
 
 ### New

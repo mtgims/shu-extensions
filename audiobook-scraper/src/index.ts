@@ -24,7 +24,10 @@ const extension = {
   manifest: {
     id: 'community.audiobook-scraper',
     name: 'Audiobook Scraper',
-    version: '1.4.0',
+    version: '1.4.1',
+    // Where copies installed from elsewhere (a computer on the same network) get updates.
+    updateUrl:
+      'https://raw.githubusercontent.com/mtgims/shu-extensions/main/audiobook-scraper/dist/audiobook-scraper.js',
     description:
       'Finds audiobook torrents on AudioBook Bay, The Pirate Bay and RuTracker (through Knaben), and plays them through Real-Debrid, AllDebrid, TorBox or Premiumize.',
     // A source: no Home rows of its own, it finds versions of books from catalog extensions.
