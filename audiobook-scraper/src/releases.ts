@@ -1,3 +1,4 @@
+import { setting } from './host.ts';
 import { searchAll } from './search.ts';
 import type { Release } from './types.ts';
 
@@ -27,7 +28,7 @@ const REASSURING = new Set(['Same narrator', 'Length matches']);
 const WRONG = new Set([
   'Summary or adaptation',
   'Different author',
-  'Translation',
+  'Other language',
   'Too small for the whole book',
 ]);
 
@@ -56,12 +57,43 @@ export const mainTitle = (title: string) => title.replace(/\s*[:([].*$/, '').tri
 
 const BUNDLE =
   /\b(collection|complete|(books?|volumes?|vol) ?\d+ ?(-|to|&) ?\d+|series|omnibus|box ?set|trilogy)\b/i;
-/** RuTracker marks English audiobooks "[Английский]"; other Cyrillic titles are translations. */
-const TRANSLATED = (title: string) =>
-  /\p{Script=Cyrillic}/u.test(title) && !/Английский|English/i.test(title);
-/** "Atomic Habits (Hindi Edition)", "[Spanish]", "Español": a translation, unless the book is too. */
+/** Language names in release titles ("(Hindi Edition)", "[Spanish]", "Español"), by code. */
+const LANGUAGES: Record<string, string> = {
+  english: 'en',
+  hindi: 'hi',
+  spanish: 'es',
+  espanol: 'es',
+  french: 'fr',
+  francais: 'fr',
+  german: 'de',
+  deutsch: 'de',
+  italian: 'it',
+  italiano: 'it',
+  portuguese: 'pt',
+  portugues: 'pt',
+  russian: 'ru',
+  japanese: 'ja',
+  chinese: 'zh',
+  arabic: 'ar',
+  turkish: 'tr',
+  polish: 'pl',
+  dutch: 'nl',
+  korean: 'ko',
+  svenska: 'sv',
+  norsk: 'no',
+  dansk: 'da',
+};
 const LANGUAGE =
-  /\b(hindi|spanish|espa[nñ]ol|french|fran[cç]ais|german|deutsch|italian|italiano|portuguese|portugu[eê]s|russian|japanese|chinese|arabic|turkish|polish|dutch|korean|svenska|norsk|dansk)\b/i;
+  /\b(english|hindi|spanish|espa[nñ]ol|french|fran[cç]ais|german|deutsch|italian|italiano|portuguese|portugu[eê]s|russian|japanese|chinese|arabic|turkish|polish|dutch|korean|svenska|norsk|dansk)\b/i;
+
+/** The language a title names, or undefined when it names none (most English releases). */
+export function languageOf(title: string): string | undefined {
+  const name = title.match(LANGUAGE)?.[1];
+  if (name) return LANGUAGES[name.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')];
+  // RuTracker marks English audiobooks "[Английский]"; other Cyrillic titles are Russian.
+  if (/\p{Script=Cyrillic}/u.test(title)) return /Английский/i.test(title) ? 'en' : 'ru';
+  return undefined;
+}
 const NOT_THE_BOOK =
   /\b(summary|analysis|study guide|dramati[sz]ed|radio (drama|play)|bbc radio|unofficial)\b/i;
 /** Shortened readings. "Unabridged" doesn't match: no word boundary inside it. */
@@ -95,8 +127,17 @@ function unexplained(release: Release, work: WorkQuery): string[] {
     ...words(release.author ?? ''),
     ...words(release.narrator ?? ''),
   ]);
+  const englishOnRuTracker =
+    /\p{Script=Cyrillic}/u.test(release.title) && languageOf(release.title) === 'en';
   return words(release.title.replace(MEASURES, ' ')).filter(
-    (w) => !known.has(w) && !SMALL.has(w) && !NOISE.has(w),
+    (w) =>
+      !known.has(w) &&
+      !SMALL.has(w) &&
+      !NOISE.has(w) &&
+      // A language name is judged as a language, not as an extra word.
+      !LANGUAGES[w.normalize('NFD').replace(/\p{M}/gu, '')] &&
+      // RuTracker's English audiobooks repeat title and author in Russian ("Dune / Дюна").
+      !(englishOnRuTracker && /\p{Script=Cyrillic}/u.test(w)),
   );
 }
 
@@ -140,10 +181,10 @@ function sizeRange(minutes: number, release: Release): [number, number] {
 /**
  * How well a torrent matches the book. It must contain every word of the title, and the
  * author's last name when known; otherwise the score is 0. Then: unexplained words, a
- * collection, a summary or a translation cost points; the catalog's narrator and a size that
- * fits the book's length earn some. Higher is better.
+ * collection, a summary or a release in a language other than [language] cost points; the
+ * catalog's narrator and a size that fits the book's length earn some. Higher is better.
  */
-export function assess(release: Release, work: WorkQuery): Ranked {
+export function assess(release: Release, work: WorkQuery, language = 'en'): Ranked {
   const text = `${release.title} ${release.author ?? ''} ${release.narrator ?? ''}`;
   const have = new Set(words(text));
   const wanted = significant(words(mainTitle(work.title)));
@@ -170,12 +211,11 @@ export function assess(release: Release, work: WorkQuery): Ranked {
     score -= 50;
     notes.push('Different author');
   }
-  const translated =
-    (TRANSLATED(release.title) && !/\p{Script=Cyrillic}/u.test(work.title)) ||
-    (LANGUAGE.test(release.title) && !LANGUAGE.test(work.title));
-  if (translated) {
+  // Only a language the title names counts: an unmarked release could be in any.
+  const spoken = languageOf(release.title);
+  if (spoken && language !== 'any' && spoken !== language && spoken !== languageOf(work.title)) {
     score -= 50;
-    notes.push('Translation');
+    notes.push('Other language');
   }
 
   // Numbers ("Book 2", "01") say less than words, so they cost less. Capped, so that a
@@ -212,8 +252,8 @@ export function assess(release: Release, work: WorkQuery): Ranked {
   return { release, score: final, notes, match: matchOf(final, notes) };
 }
 
-export function rankReleases(found: Release[], work: WorkQuery): Ranked[] {
-  const ranked = found.map((r) => assess(r, work)).filter((x) => x.score > 0);
+export function rankReleases(found: Release[], work: WorkQuery, language = 'en'): Ranked[] {
+  const ranked = found.map((r) => assess(r, work, language)).filter((x) => x.score > 0);
   const seeders = (r: Release) => r.seeders ?? Number.MAX_SAFE_INTEGER;
   ranked.sort((a, b) => b.score - a.score || seeders(b.release) - seeders(a.release));
   return ranked;
@@ -223,11 +263,12 @@ export function rankReleases(found: Release[], work: WorkQuery): Ranked[] {
 export async function findReleases(work: WorkQuery, limit = 15): Promise<Ranked[]> {
   const title = mainTitle(work.title);
   const author = work.authors?.[0] ? surname(work.authors[0]) : undefined;
+  const language = setting('language', 'en');
   let found = await searchAll(author ? `${title} ${author}` : title);
   // Some sites only match the title; try that too when the first search finds little.
-  if (author && rankReleases(found, work).length < 3) {
+  if (author && rankReleases(found, work, language).length < 3) {
     const byTitle = await searchAll(title);
     found = [...found, ...byTitle.filter((r) => !found.some((f) => f.id === r.id))];
   }
-  return rankReleases(found, work).slice(0, limit);
+  return rankReleases(found, work, language).slice(0, limit);
 }

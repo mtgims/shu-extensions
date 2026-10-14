@@ -52,6 +52,7 @@ export async function loadRelease(bookId: string): Promise<LoadedRelease> {
   if (!release.infoHash) throw new Error('This post has no torrent.');
   const result = release as LoadedRelease;
   result.files ??= await findFiles(result);
-  await host.cache.set(`loaded:${bookId}`, result, 24 * 3600);
+  // Without files, ask again next time: a debrid service may have the list by then.
+  if (result.files) await host.cache.set(`loaded:${bookId}`, result, 24 * 3600);
   return result;
 }

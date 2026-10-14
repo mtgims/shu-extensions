@@ -32,7 +32,7 @@ export interface Product {
   rating?: { overall_distribution?: { display_average_rating?: string; num_ratings?: number } };
   publisher_summary?: string;
   merchandising_summary?: string;
-  series?: { title: string; sequence?: string }[];
+  series?: { asin?: string; title: string; sequence?: string }[];
   category_ladders?: { ladder: { name: string }[] }[];
   content_delivery_type?: string;
 }
@@ -56,11 +56,21 @@ export function plainText(html?: string): string | undefined {
     .replace(/<\s*(br|\/p|\/li)\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&lsquo;/g, '‘')
+    .replace(/&rsquo;/g, '’')
+    .replace(/&ldquo;/g, '“')
+    .replace(/&rdquo;/g, '”')
+    .replace(/&mdash;/g, '—')
+    .replace(/&hellip;/g, '…')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
+    .replace(/&#(x?)([0-9a-f]+);/gi, (_, hex: string, n: string) =>
+      String.fromCodePoint(Number.parseInt(n, hex ? 16 : 10)),
+    )
+    // Last, so "&amp;lt;" stays "&lt;".
+    .replace(/&amp;/g, '&')
     .replace(/^\s*[-–—_*=]{3,}\s*$/gm, '')
     .replace(/[ \t]+/g, ' ')
     .replace(/\n\s*\n+/g, '\n')
@@ -83,7 +93,11 @@ export function toSummary(p: Product): Summary {
 }
 
 export function toWork(p: Product): Work {
-  const series = p.series?.[0];
+  // A book is often in a big series too ("The Dune Sequence", book 12); the main one numbers it
+  // lowest ("Dune", book 1).
+  const series = [...(p.series ?? [])].sort(
+    (a, b) => (Number(a.sequence) || 999) - (Number(b.sequence) || 999),
+  )[0];
   const genres = [
     ...new Set((p.category_ladders ?? []).flatMap((c) => c.ladder.map((l) => l.name))),
   ].slice(0, 5);
@@ -97,6 +111,7 @@ export function toWork(p: Product): Work {
     series: series
       ? `${series.title}${series.sequence ? `, book ${series.sequence}` : ''}`
       : undefined,
+    seriesId: series?.asin,
     chapters: [],
   };
 }
@@ -139,6 +154,55 @@ export async function product(asin: string): Promise<Work> {
     query: { response_groups: FULL_GROUPS, image_sizes: '500' },
   });
   return toWork(res.product);
+}
+
+/** How a series lists its books (and how a book lists its series, parts and bundles). */
+export interface Relationship {
+  asin: string;
+  relationship_to_product: string;
+  relationship_type: string;
+  sort?: string;
+}
+
+/**
+ * The books of a series in reading order, as Audible sorts them: each place in the series with
+ * its editions, leaving out the place of [self] (the book being shown, in any edition).
+ */
+export function seriesPlaces(relationships: Relationship[], self?: string, limit = 30): string[][] {
+  const books = relationships
+    .filter((r) => r.relationship_to_product === 'child' && r.relationship_type === 'series')
+    .sort((a, b) => Number(a.sort ?? 0) - Number(b.sort ?? 0));
+  const place = (r: Relationship) => r.sort ?? r.asin;
+  const own = books.find((r) => r.asin === self);
+  const places = new Map<string, string[]>();
+  for (const r of books) {
+    if (own && place(r) === place(own)) continue;
+    places.set(place(r), [...(places.get(place(r)) ?? []), r.asin]);
+  }
+  return [...places.values()].slice(0, limit);
+}
+
+/** The plain reading, not a dramatized or split-up edition ("(1 of 3) [Dramatized Adaptation]"). */
+const plainEdition = (p: Product) => !/dramati[sz]ed|\(\d+ of \d+\)/i.test(p.title);
+
+export async function seriesBooks(seriesAsin: string, self?: string): Promise<Summary[]> {
+  const res = await getJson<{ product: { relationships?: Relationship[] } }>(
+    `${api()}/${encodeURIComponent(seriesAsin)}`,
+    { query: { response_groups: 'relationships' } },
+  );
+  const places = seriesPlaces(res.product.relationships ?? [], self);
+  if (places.length === 0) return [];
+  const { products: found } = await products({
+    asins: places.flat().slice(0, 50).join(','),
+    num_results: 50,
+  });
+  // Answers don't keep the order asked for.
+  const byAsin = new Map(found.map((p) => [p.asin, p]));
+  return places.flatMap((asins) => {
+    const editions = asins.flatMap((a) => byAsin.get(a) ?? []);
+    const p = editions.find(plainEdition) ?? editions[0];
+    return p ? [toSummary(p)] : [];
+  });
 }
 
 const words = (s: string): string[] => s.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];

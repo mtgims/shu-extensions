@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 - 2026-10-14
+
+### New
+- Book pages list the other books of the series, in reading order
+
+### Fixed
+- Book descriptions could show codes like &#8217; or &rsquo; instead of quotes and dashes
+
 ## 1.0.0 - 2026-10-08
 
 First release.

@@ -5,6 +5,7 @@ import {
   matchScore,
   type Product,
   plainText,
+  seriesPlaces,
   toSummary,
   toWork,
 } from '../src/audible.ts';
@@ -57,6 +58,43 @@ test('a rating needs ratings behind it; lengths read like a clock', () => {
   assert.equal(duration(45), '45 min');
   assert.equal(duration(undefined), undefined);
   assert.equal(plainText('<p></p>'), undefined);
+  assert.equal(
+    plainText('Ender&#8217;s &rsquo;Game&#x2019; &mdash; write &amp;lt;b&amp;gt;'),
+    'Ender’s ’Game’ — write &lt;b&gt;',
+  );
+});
+
+test('a series in reading order, without its parts and bundles', () => {
+  const rel = (asin: string, sort: string, type = 'series', to = 'child') => ({
+    asin,
+    sort,
+    relationship_type: type,
+    relationship_to_product: to,
+  });
+  assert.deepEqual(
+    seriesPlaces([
+      rel('third', '13'),
+      rel('first', '1'),
+      rel('part', '2', 'component'),
+      rel('parent', '1', 'series', 'parent'),
+      rel('second', '2'),
+    ]),
+    [['first'], ['second'], ['third']],
+  );
+  // Editions share a place; the book being shown leaves out its place, whichever edition it is.
+  assert.deepEqual(
+    seriesPlaces(
+      [
+        rel('one', '1'),
+        rel('one-dramatized', '1'),
+        rel('two', '2'),
+        rel('two-other', '2'),
+        rel('three', '3'),
+      ],
+      'two-other',
+    ),
+    [['one', 'one-dramatized'], ['three']],
+  );
 });
 
 test('the audiobook edition of a book: all title words and the author, plain edition first', () => {

@@ -33,7 +33,7 @@ const extension = {
   manifest: {
     id: 'community.audiobook-catalog',
     name: 'Audiobook Catalog',
-    version: '1.0.0',
+    version: '1.1.0',
     description:
       'Trending and most read books, new audiobook releases and genres, with narrators, length and ratings. Playing needs a source extension.',
     catalogs: [
@@ -150,9 +150,25 @@ const extension = {
         rating: edition?.rating,
         genres: edition?.genres?.length ? edition.genres : book.genres,
         series: edition?.series,
+        seriesId: edition?.seriesId,
+        editionId: edition?.id,
         chapters: [],
       };
     });
+  },
+
+  /** The other books of the book's series, in reading order. Asked for once the page shows. */
+  async series(id: string) {
+    const work = await extension.book(id);
+    const seriesId = work.seriesId;
+    if (!seriesId) return { books: [], hasMore: false };
+    const self = (work.editionId ?? id).replace(/^audible:/, '');
+    const books = await cached(
+      `series:${seriesId}:${self}:${setting('region', '')}`,
+      24 * 3600,
+      () => audible.seriesBooks(seriesId, self),
+    );
+    return { books, hasMore: false };
   },
 
   /** Catalog books have no files of their own; source extensions provide the versions. */

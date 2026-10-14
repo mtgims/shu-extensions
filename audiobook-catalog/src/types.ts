@@ -17,5 +17,8 @@ export interface Work extends Summary {
   rating?: number;
   genres?: string[];
   series?: string;
+  /** Not shown by the app: what series() needs, the Audible series and edition of the book. */
+  seriesId?: string;
+  editionId?: string;
   chapters: [];
 }

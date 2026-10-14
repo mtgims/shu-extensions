@@ -24,9 +24,9 @@ const extension = {
   manifest: {
     id: 'community.audiobook-scraper',
     name: 'Audiobook Scraper',
-    version: '1.3.0',
+    version: '1.4.0',
     description:
-      'Finds audiobook torrents on AudioBook Bay, The Pirate Bay and the trackers Knaben indexes, and plays them through Real-Debrid, AllDebrid, TorBox or Premiumize.',
+      'Finds audiobook torrents on AudioBook Bay, The Pirate Bay and RuTracker (through Knaben), and plays them through Real-Debrid, AllDebrid, TorBox or Premiumize.',
     // A source: no Home rows of its own, it finds versions of books from catalog extensions.
     releases: true,
     catalogs: [{ id: 'search', name: 'Torrents', search: true }],
@@ -43,7 +43,24 @@ const extension = {
         options: [
           { value: 'audiobookbay', label: 'AudioBook Bay' },
           { value: 'piratebay', label: 'The Pirate Bay' },
-          { value: 'knaben', label: 'Knaben (1337x, RuTracker, …)' },
+          { value: 'knaben', label: 'Knaben (RuTracker)' },
+        ],
+      },
+      {
+        key: 'language',
+        label: 'Audiobook language',
+        type: 'select',
+        default: 'en',
+        help: 'Versions that say they are in another language are marked as poor matches.',
+        options: [
+          { value: 'en', label: 'English' },
+          { value: 'es', label: 'Spanish' },
+          { value: 'fr', label: 'French' },
+          { value: 'de', label: 'German' },
+          { value: 'it', label: 'Italian' },
+          { value: 'pt', label: 'Portuguese' },
+          { value: 'ru', label: 'Russian' },
+          { value: 'any', label: 'Any' },
         ],
       },
       { key: 'minSeeders', label: 'Minimum seeders', type: 'number', default: 0 },

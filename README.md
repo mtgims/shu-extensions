@@ -15,7 +15,8 @@ To install just one, paste the raw link to its file in `dist/` instead, for exam
 ## Audiobook Catalog
 
 Fills the home screen: what's trending, new audiobook releases, and the most read books of each
-genre, plus browsing by genre and search. Book pages show the narrator, length, rating and series.
+genre, plus browsing by genre and search. Book pages show the narrator, length, rating and series,
+and the other books of the series.
 
 The lists come from [Open Library](https://openlibrary.org) (what people are reading) and the
 audiobook details from Audible's public catalog. The catalog doesn't play anything by itself:
@@ -35,12 +36,14 @@ need an account with one of them.
 
 It finds versions of catalog books, and you can also search it directly. Each version says how
 well it matches the book: "Same narrator", "Length matches", or what's off, like "Different
-narrator", "Abridged" or "Possibly a collection". The best match comes first.
+narrator", "Abridged" or "Possibly a collection". The best match comes first; Shu plays a clear
+match right away and asks you to pick when none is clear.
 
 Settings:
 
 - **API keys** for the debrid services you use; with more than one, the app lets you pick per book
 - **Search on**: which indexers to search
+- **Audiobook language**: versions that say they're in another language count as poor matches
 - **Minimum seeders**: hides results with few seeders
 - **Jackett / Prowlarr**: a Torznab URL and API key, to add any indexer they support
 

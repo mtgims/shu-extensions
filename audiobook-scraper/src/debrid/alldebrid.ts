@@ -73,6 +73,10 @@ export const alldebrid: DebridService = {
       (s) => !s || s.statusCode >= READY,
       3,
     );
+    // Codes above "ready" are failures (upload failed, too big, timed out…): waiting won't help.
+    if (status && status.statusCode > READY) {
+      throw new Error(`AllDebrid can't download this torrent (${status.status}).`);
+    }
     if (!status || status.statusCode !== READY) {
       const pct = status?.size ? Math.round(((status.downloaded ?? 0) / status.size) * 100) : 0;
       throw new NotReadyError(`AllDebrid: ${status?.status ?? 'unknown'} ${pct}%`, pct / 100);

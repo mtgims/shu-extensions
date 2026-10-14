@@ -9,7 +9,10 @@ export interface DebridService {
    * torrent to the user's account implement this (Real-Debrid and AllDebrid removed it).
    */
   cached?(apiKey: string, hashes: string[]): Promise<Set<string>>;
-  /** File list of a cached torrent, again without side effects. */
+  /**
+   * File list of a cached torrent. Without side effects, except on Real-Debrid, which can only
+   * show it once the torrent is in the user's account, so it adds it.
+   */
   cachedFiles?(apiKey: string, hash: string): Promise<TorrentFile[] | undefined>;
   /** Adds the torrent if needed and returns a direct link to the wanted file. */
   resolve(apiKey: string, magnet: string, hash: string, target: FileTarget): Promise<string>;

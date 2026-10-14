@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.4.0 - 2026-10-14
+
+### New
+- Audiobook language setting: versions in your language are no longer marked as poor matches,
+  and versions that say they're in another language are
+
+### Changed
+- "Translation" is now "Other language"
+- The Knaben option now says what it adds for audiobooks: RuTracker. Its API no longer returns
+  1337x and the other sites it used to list
+- English audiobooks from RuTracker can be clear matches now; the Russian copy of the title
+  they carry no longer counts against them
+
+### Fixed
+- Results from Knaben's second Pirate Bay mirror showed up twice, labeled "(proxy v2)"
+- With Real-Debrid, torrents from Knaben or Jackett/Prowlarr came out as one chapter (just the
+  biggest file). Opening such a book now adds it to your Real-Debrid account to read its files
+- A torrent Real-Debrid or AllDebrid gave up on (dead, failed, timed out) showed as
+  "downloading" forever; it's now an error, so the next version gets a try
+- A torrent you deleted on Real-Debrid's site no longer fails until the app restarts; it's
+  added again
+
 ## 1.3.0 - 2026-10-13
 
 ### New

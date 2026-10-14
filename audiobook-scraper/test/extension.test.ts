@@ -11,7 +11,7 @@ import { toRelease as fromKnaben } from '../src/indexers/knaben.ts';
 import { toRelease as fromTpb } from '../src/indexers/piratebay.ts';
 import { parseFeed } from '../src/indexers/torznab.ts';
 import { hashFromMagnet, magnetLink, normalizeHash, trackersOf } from '../src/magnet.ts';
-import { mainTitle, rankReleases } from '../src/releases.ts';
+import { languageOf, mainTitle, rankReleases } from '../src/releases.ts';
 import { mergeDuplicates, rank, relevance } from '../src/search.ts';
 import type { Release } from '../src/types.ts';
 
@@ -102,7 +102,7 @@ test('indexer rows become releases with mergeable ids', () => {
     added: '1621161202',
     category: '102',
   });
-  const kn = fromKnaben({
+  const knHit = {
     title: 'Book',
     hash: HASH,
     bytes: 1,
@@ -111,8 +111,13 @@ test('indexer rows become releases with mergeable ids', () => {
     cachedOrigin: 'The Pirate Bay (proxy)',
     details: 'https://knaben.xyz/thepiratebay/description.php?id=45465717',
     magnetUrl: `magnet:?xt=urn:btih:${HASH}&tr=udp%3A%2F%2Ft.example%3A1%2Fannounce`,
-  });
+  };
+  const kn = fromKnaben(knHit);
   assert.equal(tpb?.id, kn?.id);
+  // Knaben's other mirror of the same site.
+  const v2 = fromKnaben({ ...knHit, cachedOrigin: 'The Pirate Bay (proxy v2)' });
+  assert.equal(v2?.id, tpb?.id);
+  assert.equal(v2?.source, 'The Pirate Bay');
   const [merged] = mergeDuplicates([tpb as Release, kn as Release]);
   assert.equal(merged?.seeders, 338);
   assert.ok(merged?.trackers?.includes('udp://t.example:1/announce'));
@@ -247,6 +252,51 @@ test('releases: translated editions rank below the original', () => {
     ranked.map((r) => r.release.id),
     ['en', 'hindi', 'es'],
   );
+
+  // A Spanish listener: the Spanish edition is fine, the Hindi one isn't, and an unmarked
+  // release could be either, so it isn't held against.
+  const forSpanish = rankReleases(
+    [
+      { id: 'hindi', title: 'Atomic Habits (Hindi Edition) - James Clear', source: 's' },
+      { id: 'es', title: 'Atomic Habits [Español] - James Clear', source: 's' },
+      { id: 'plain', title: 'Atomic Habits - James Clear', source: 's' },
+      { id: 'eng', title: 'Atomic Habits - James Clear [English]', source: 's' },
+    ],
+    work,
+    'es',
+  );
+  const match = Object.fromEntries(forSpanish.map((r) => [r.release.id, r.match]));
+  assert.deepEqual(match, { es: 'good', plain: 'good', hindi: 'poor', eng: 'poor' });
+  assert.ok(
+    rankReleases(
+      [{ id: 'x', title: 'Atomic Habits (Hindi Edition) - James Clear', source: 's' }],
+      work,
+      'any',
+    )[0]?.match !== 'poor',
+  );
+});
+
+test('RuTracker: the Russian copy of title and author is no extra word', () => {
+  const [english] = rankReleases(
+    [
+      {
+        id: 'ru',
+        title:
+          'Фрэнк Херберт. Дюна (Английский) / Frank Herbert - Dune [read by Scott Brick, 2007]',
+        source: 'RuTracker.org',
+      },
+    ],
+    { title: 'Dune', authors: ['Frank Herbert'], narrators: ['Scott Brick'] },
+  );
+  assert.equal(english?.match, 'good');
+});
+
+test('the language a release names', () => {
+  assert.equal(languageOf('Dune [Español]'), 'es');
+  assert.equal(languageOf('Dune (Français)'), 'fr');
+  assert.equal(languageOf('[Английский] Герберт - Dune'), 'en');
+  assert.equal(languageOf('Герберт Фрэнк - Дюна'), 'ru');
+  assert.equal(languageOf('Dune - Frank Herbert (Unabridged)'), undefined);
 });
 
 test('releases: words the book does not explain push sequels down', () => {

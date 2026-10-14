@@ -5,8 +5,8 @@ import type { Release } from '../types.ts';
 import type { Indexer } from './types.ts';
 
 /**
- * Knaben is a meta-search over many public trackers (1337x, RuTracker, The Pirate Bay, Nyaa,
- * LimeTorrents and more), which is how this extension covers sites behind Cloudflare.
+ * Knaben is a meta-search over public trackers. For audiobooks its API answers with RuTracker
+ * and its own mirrors of The Pirate Bay (checked October 2026); RuTracker is why it's here.
  */
 const API = 'https://api.knaben.org/v1';
 const AUDIOBOOKS = 1003000;
@@ -25,7 +25,8 @@ interface Hit {
 export function toRelease(hit: Hit): Release | undefined {
   const hash = normalizeHash(hit.hash);
   if (!hash) return undefined;
-  const origin = hit.cachedOrigin?.replace(/\s*\(proxy\)$/i, '');
+  // Knaben names its mirrors "The Pirate Bay (proxy)", "(proxy v2)"…: the same site and ids.
+  const origin = hit.cachedOrigin?.replace(/\s*\(proxy[^)]*\)$/i, '');
   const fromTpb = origin === 'The Pirate Bay' ? hit.details?.match(/[?&]id=(\d+)/)?.[1] : undefined;
   return {
     // The same id as the Pirate Bay indexer gives, so duplicates merge.
