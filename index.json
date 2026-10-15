@@ -11,9 +11,16 @@
     {
       "id": "community.audiobook-scraper",
       "name": "Audiobook Scraper",
-      "version": "1.4.1",
+      "version": "1.5.0",
       "description": "Finds audiobooks on public indexers and plays them through your debrid service.",
       "url": "audiobook-scraper/dist/audiobook-scraper.js"
+    },
+    {
+      "id": "community.audiobook-torrents",
+      "name": "Audiobook Torrents",
+      "version": "1.5.0",
+      "description": "Finds audiobooks on public indexers and plays the torrents in the app, with no account. Your IP address is visible to everyone sharing the book; a VPN is strongly advised.",
+      "url": "audiobook-scraper/dist/audiobook-torrents.js"
     }
   ]
 }

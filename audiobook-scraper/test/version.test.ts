@@ -8,10 +8,12 @@ const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf
 test('manifest, package.json, index.json and CHANGELOG agree on the version', () => {
   const { version } = JSON.parse(read('../package.json'));
   const folder = new URL('..', import.meta.url).pathname.split('/').at(-2);
-  const manifest = read('../src/index.ts').match(/version: '([^']+)'/)?.[1];
-  const listed = JSON.parse(read('../../index.json')).extensions.find((e: { url: string }) =>
-    e.url.startsWith(`${folder}/`),
-  )?.version;
+  // Both extensions built from this folder share src/version.ts.
+  const manifest = read('../src/version.ts').match(/VERSION = '([^']+)'/)?.[1];
+  const listed = JSON.parse(read('../../index.json'))
+    .extensions.filter((e: { url: string }) => e.url.startsWith(`${folder}/`))
+    .map((e: { version: string }) => e.version);
   const logged = read('../CHANGELOG.md').match(/^## (\S+)/m)?.[1];
-  assert.deepEqual([manifest, listed, logged], [version, version, version]);
+  assert.equal(listed.length, 2);
+  assert.deepEqual([manifest, ...listed, logged], [version, version, version, version]);
 });

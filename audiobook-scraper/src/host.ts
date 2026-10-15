@@ -37,6 +37,28 @@ interface Host {
   };
   sleep(ms: number): Promise<void>;
   log(...args: unknown[]): void;
+  /** Torrents played by the app itself (Shu 0.6.0 and later). */
+  torrent?: {
+    files(magnet: string, options?: TorrentOptions): Promise<TorrentFileInfo[]>;
+    stream(magnet: string, index: number, options?: TorrentOptions): Promise<string>;
+  };
+}
+
+export interface TorrentFileInfo {
+  index: number;
+  path: string;
+  size: number;
+}
+
+/** How the app keeps what it downloads (bytes, bytes a second, days). */
+export interface TorrentOptions {
+  folder?: string;
+  deleteWhenFinished?: boolean;
+  keepDays?: number | null;
+  storageLimit?: number;
+  downloadLimit?: number;
+  uploadLimit?: number;
+  shareAfter?: boolean;
 }
 
 /** Set up by the app before this code runs. */

@@ -1,9 +1,9 @@
-import { configuredServices } from './debrid/index.ts';
 import { host } from './host.ts';
 import { parseId } from './ids.ts';
 import { postDetails } from './indexers/audiobookbay.ts';
 import { torrentFiles } from './indexers/piratebay.ts';
 import { recall } from './search.ts';
+import { configuredServices } from './services.ts';
 import type { Release, TorrentFile } from './types.ts';
 
 export type LoadedRelease = Release & { infoHash: string };

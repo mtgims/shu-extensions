@@ -4,6 +4,10 @@ import type { TorrentFile } from '../types.ts';
 export interface DebridService {
   id: string;
   name: string;
+  /** False for a service that works without an API key in the settings. */
+  needsKey?: boolean;
+  /** False when its links must not be reused later (they only work for a while). */
+  cacheLinks?: boolean;
   /**
    * Which of `hashes` are instantly available. Only services that can tell without adding the
    * torrent to the user's account implement this (Real-Debrid and AllDebrid removed it).

@@ -1,5 +1,19 @@
 # Changelog
 
+Both extensions in this folder share their code and version.
+
+## 1.5.0 - 2026-10-15
+
+### New
+- Audiobook Torrents: the same search, playing torrents in the app itself, with no account
+  or setup (needs Shu 0.6.0). It asks you to accept a warning first: your IP address is
+  visible to everyone sharing the book, speed depends on how many share it, and a VPN is
+  strongly advised. Settings for the download folder, deleting finished books, how long
+  and how much to keep, speed limits and sharing
+
+### Changed
+- Audiobook Scraper works as before; its code is now shared with Audiobook Torrents
+
 ## 1.4.1 - 2026-10-14
 
 ### Changed
