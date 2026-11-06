@@ -33,7 +33,7 @@ const extension = {
   manifest: {
     id: 'community.audiobook-catalog',
     name: 'Audiobook Catalog',
-    version: '1.1.1',
+    version: '1.2.0',
     // Where copies installed from elsewhere (a computer on the same network) get updates.
     updateUrl:
       'https://raw.githubusercontent.com/mtgims/shu-extensions/main/audiobook-catalog/dist/audiobook-catalog.js',
@@ -160,18 +160,19 @@ const extension = {
     });
   },
 
-  /** The other books of the book's series, in reading order. Asked for once the page shows. */
+  /** The other books of the book's series, in reading order, and where this book sits among them
+   * (`at`: the number before it). Asked for once the page shows, and when a book ends. */
   async series(id: string) {
     const work = await extension.book(id);
     const seriesId = work.seriesId;
     if (!seriesId) return { books: [], hasMore: false };
     const self = (work.editionId ?? id).replace(/^audible:/, '');
-    const books = await cached(
-      `series:${seriesId}:${self}:${setting('region', '')}`,
+    const { books, at } = await cached(
+      `series2:${seriesId}:${self}:${setting('region', '')}`,
       24 * 3600,
       () => audible.seriesBooks(seriesId, self),
     );
-    return { books, hasMore: false };
+    return { books, hasMore: false, at };
   },
 
   /** Catalog books have no files of their own; source extensions provide the versions. */

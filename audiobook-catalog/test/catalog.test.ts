@@ -78,7 +78,7 @@ test('a series in reading order, without its parts and bundles', () => {
       rel('part', '2', 'component'),
       rel('parent', '1', 'series', 'parent'),
       rel('second', '2'),
-    ]),
+    ]).places,
     [['first'], ['second'], ['third']],
   );
   // Editions share a place; the book being shown leaves out its place, whichever edition it is.
@@ -93,8 +93,13 @@ test('a series in reading order, without its parts and bundles', () => {
       ],
       'two-other',
     ),
-    [['one', 'one-dramatized'], ['three']],
+    { places: [['one', 'one-dramatized'], ['three']], before: 1 },
   );
+  // Where the book sits: first, last, or not in the list at all.
+  const three = [rel('one', '1'), rel('two', '2'), rel('three', '3')];
+  assert.equal(seriesPlaces(three, 'one').before, 0);
+  assert.equal(seriesPlaces(three, 'three').before, 2);
+  assert.equal(seriesPlaces(three, 'elsewhere').before, undefined);
 });
 
 test('the audiobook edition of a book: all title words and the author, plain edition first', () => {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 - 2026-11-06
+
+### New
+- Tells Shu where a book sits in its series, so Shu can suggest the next one when a book ends
+  (needs Shu 0.7.0)
+
 ## 1.1.1 - 2026-10-14
 
 ### Changed

@@ -168,41 +168,66 @@ export interface Relationship {
  * The books of a series in reading order, as Audible sorts them: each place in the series with
  * its editions, leaving out the place of [self] (the book being shown, in any edition).
  */
-export function seriesPlaces(relationships: Relationship[], self?: string, limit = 30): string[][] {
+/** The other books of a series in reading order (editions of one book share a place), and how
+ * many of them come before [self] when it is in the series. */
+export function seriesPlaces(
+  relationships: Relationship[],
+  self?: string,
+  limit = 30,
+): { places: string[][]; before?: number } {
   const books = relationships
     .filter((r) => r.relationship_to_product === 'child' && r.relationship_type === 'series')
     .sort((a, b) => Number(a.sort ?? 0) - Number(b.sort ?? 0));
   const place = (r: Relationship) => r.sort ?? r.asin;
   const own = books.find((r) => r.asin === self);
   const places = new Map<string, string[]>();
+  let before: number | undefined;
   for (const r of books) {
-    if (own && place(r) === place(own)) continue;
+    if (own && place(r) === place(own)) {
+      before ??= places.size;
+      continue;
+    }
     places.set(place(r), [...(places.get(place(r)) ?? []), r.asin]);
   }
-  return [...places.values()].slice(0, limit);
+  const all = [...places.values()];
+  return {
+    places: all.slice(0, limit),
+    before: before !== undefined && before < limit ? before : undefined,
+  };
 }
 
 /** The plain reading, not a dramatized or split-up edition ("(1 of 3) [Dramatized Adaptation]"). */
 const plainEdition = (p: Product) => !/dramati[sz]ed|\(\d+ of \d+\)/i.test(p.title);
 
-export async function seriesBooks(seriesAsin: string, self?: string): Promise<Summary[]> {
+/** The other books of a series, and [at]: how many of them come before [self] (so `books[at]` is
+ * the next one), when known. */
+export async function seriesBooks(
+  seriesAsin: string,
+  self?: string,
+): Promise<{ books: Summary[]; at?: number }> {
   const res = await getJson<{ product: { relationships?: Relationship[] } }>(
     `${api()}/${encodeURIComponent(seriesAsin)}`,
     { query: { response_groups: 'relationships' } },
   );
-  const places = seriesPlaces(res.product.relationships ?? [], self);
-  if (places.length === 0) return [];
+  const { places, before } = seriesPlaces(res.product.relationships ?? [], self);
+  if (places.length === 0) return { books: [] };
   const { products: found } = await products({
     asins: places.flat().slice(0, 50).join(','),
     num_results: 50,
   });
   // Answers don't keep the order asked for.
   const byAsin = new Map(found.map((p) => [p.asin, p]));
-  return places.flatMap((asins) => {
+  const books: Summary[] = [];
+  let at: number | undefined;
+  for (const [i, asins] of places.entries()) {
+    if (i === before) at = books.length;
     const editions = asins.flatMap((a) => byAsin.get(a) ?? []);
     const p = editions.find(plainEdition) ?? editions[0];
-    return p ? [toSummary(p)] : [];
-  });
+    if (p) books.push(toSummary(p));
+  }
+  // The book is the last of its series: nothing comes after it.
+  if (before !== undefined && before >= places.length) at = books.length;
+  return { books, at };
 }
 
 const words = (s: string): string[] => s.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
