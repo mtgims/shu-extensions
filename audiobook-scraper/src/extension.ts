@@ -34,11 +34,13 @@ const searchSettings: Setting[] = [
     key: 'sources',
     label: 'Search on',
     type: 'multiselect',
-    default: ['audiobookbay', 'piratebay', 'knaben'],
+    default: ['audiobookbay', 'piratebay', 'bitsearch', 'rutor', 'knaben'],
     options: [
       { value: 'audiobookbay', label: 'AudioBook Bay' },
       { value: 'piratebay', label: 'The Pirate Bay' },
-      { value: 'knaben', label: 'Knaben (RuTracker)' },
+      { value: 'bitsearch', label: 'Bitsearch' },
+      { value: 'rutor', label: 'RuTor (Russian)' },
+      { value: 'knaben', label: 'Knaben' },
     ],
   },
   {

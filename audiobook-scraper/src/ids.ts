@@ -1,6 +1,6 @@
 /**
  * Book ids. They carry what is needed to load the book again after the app restarts:
- *   atb:h:<infohash>            a torrent known by hash (Knaben, Torznab)
+ *   atb:h:<infohash>            a torrent known by hash (Knaben, Bitsearch, RuTor, Torznab)
  *   atb:tpb:<tpb id>:<infohash>  a Pirate Bay torrent (its id gives the file list)
  *   atb:abb:<slug>               an AudioBook Bay post (the hash is on the post)
  * Chapter ids are file indexes in the torrent, or -1 for "the whole torrent".

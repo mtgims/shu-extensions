@@ -2,6 +2,15 @@
 
 Both extensions in this folder share their code and version.
 
+## 1.6.0 - 2026-11-06
+
+### New
+- Searches Bitsearch and RuTor too. RuTor brings Russian audiobooks, which Knaben no
+  longer finds on RuTracker
+
+### Changed
+- "Knaben (RuTracker)" is now just "Knaben": it only returns Pirate Bay results at the moment
+
 ## 1.5.0 - 2026-10-15
 
 ### New

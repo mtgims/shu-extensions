@@ -5,8 +5,9 @@ import type { Release } from '../types.ts';
 import type { Indexer } from './types.ts';
 
 /**
- * Knaben is a meta-search over public trackers. For audiobooks its API answers with RuTracker
- * and its own mirrors of The Pirate Bay (checked October 2026); RuTracker is why it's here.
+ * Knaben is a meta-search over public trackers. For audiobooks its API answered with RuTracker
+ * and its own Pirate Bay mirrors in October 2026, and in November with the mirrors and now and
+ * then 1337x only. Kept in case its coverage comes back.
  */
 const API = 'https://api.knaben.org/v1';
 const AUDIOBOOKS = 1003000;

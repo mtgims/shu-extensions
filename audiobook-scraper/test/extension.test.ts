@@ -9,6 +9,7 @@ import { audioTags, formatSize, parseSize } from '../src/format.ts';
 import { abbId, hashId, parseId, tpbId } from '../src/ids.ts';
 import { toRelease as fromKnaben } from '../src/indexers/knaben.ts';
 import { toRelease as fromTpb } from '../src/indexers/piratebay.ts';
+import { toRelease as fromRutor } from '../src/indexers/rutor.ts';
 import { parseFeed } from '../src/indexers/torznab.ts';
 import { hashFromMagnet, magnetLink, normalizeHash, trackersOf } from '../src/magnet.ts';
 import { languageOf, mainTitle, rankReleases } from '../src/releases.ts';
@@ -121,6 +122,25 @@ test('indexer rows become releases with mergeable ids', () => {
   const [merged] = mergeDuplicates([tpb as Release, kn as Release]);
   assert.equal(merged?.seeders, 338);
   assert.ok(merged?.trackers?.includes('udp://t.example:1/announce'));
+});
+
+test('RuTor rows: audiobooks only, size and peers counted from the end', () => {
+  const magnet = `magnet:?xt=urn:btih:${HASH}&tr=udp://opentor.net:6969&tr=http://retracker.local/announce`;
+  const row = {
+    cells: ['22 Сен 26', 'Стивен Кинг - Томминокеры (2025) МР3 ', '8', '1.2 GB', ' 16  0'],
+    links: ['//d.rutor.info/download/1', magnet, '/torrent/1/x'],
+    seeders: ' 16',
+  };
+  const r = fromRutor(row);
+  assert.equal(r?.id, hashId(HASH));
+  assert.equal(r?.seeders, 16);
+  assert.equal(r?.size, Math.round(1.2 * 1024 ** 3));
+  assert.equal(r?.added, '2026-09-22T00:00:00.000Z');
+  assert.deepEqual(r?.trackers, ['udp://opentor.net:6969']);
+  assert.equal(
+    fromRutor({ ...row, cells: ['', 'Роберт Сойер - Сборник (2010) FB2', '1 GB', '1'] }),
+    undefined,
+  );
 });
 
 test('ranking: title match, then unknown seeders, then most seeders', () => {

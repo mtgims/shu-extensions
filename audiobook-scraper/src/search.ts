@@ -1,12 +1,14 @@
 import { cached, host, setting, withTimeout } from './host.ts';
 import { audiobookbay } from './indexers/audiobookbay.ts';
+import { bitsearch } from './indexers/bitsearch.ts';
 import { knaben } from './indexers/knaben.ts';
 import { piratebay } from './indexers/piratebay.ts';
+import { rutor } from './indexers/rutor.ts';
 import { torznab } from './indexers/torznab.ts';
 import type { Indexer } from './indexers/types.ts';
 import type { Release } from './types.ts';
 
-const INDEXERS: Record<string, Indexer> = { audiobookbay, piratebay, knaben };
+const INDEXERS: Record<string, Indexer> = { audiobookbay, piratebay, bitsearch, rutor, knaben };
 
 /** No single site may hold up a search longer than this. */
 const INDEXER_TIMEOUT = 10_000;
