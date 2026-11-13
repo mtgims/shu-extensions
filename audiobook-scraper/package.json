@@ -1,12 +1,12 @@
 {
   "name": "audiobook-scraper-extension",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Shu extensions: audiobooks played through debrid services, or as torrents in the app",
   "private": true,
   "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --format=iife --target=es2020 --minify --legal-comments=none --outfile=dist/audiobook-scraper.js && esbuild src/torrents.ts --bundle --format=iife --target=es2020 --minify --legal-comments=none --outfile=dist/audiobook-torrents.js",
+    "build": "esbuild src/index.ts --bundle --format=iife --target=es2020 --minify --legal-comments=none --outfile=dist/audiobook-scraper.js && esbuild src/torrents.ts --bundle --format=iife --target=es2020 --minify --legal-comments=none --outfile=dist/audiobook-torrents.js && esbuild src/golden.ts --bundle --format=iife --target=es2020 --minify --legal-comments=none --outfile=dist/golden-audiobooks.js",
     "test": "node --test 'test/**/*.test.ts'",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src test",

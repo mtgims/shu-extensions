@@ -47,6 +47,13 @@ Settings:
 - **Minimum seeders**: hides results with few seeders
 - **Jackett / Prowlarr**: a Torznab URL and API key, to add any indexer they support
 
+## Golden Audiobooks
+
+A source for books on [Golden Audiobooks](https://goldenaudiobooks.com), which streams them as
+MP3 files: no torrents, no account and no settings. It offers versions of catalog books the
+same way the scraper does, and you can also search it or browse what's new from Home. Mostly
+popular English books; some posts don't name the author, so those never count as a clear match.
+
 ## Development
 
 Each extension is a small TypeScript project bundled into a single file with esbuild. You need

@@ -11,16 +11,23 @@
     {
       "id": "community.audiobook-scraper",
       "name": "Audiobook Scraper",
-      "version": "1.6.0",
+      "version": "1.7.0",
       "description": "Finds audiobooks on public indexers and plays them through your debrid service.",
       "url": "audiobook-scraper/dist/audiobook-scraper.js"
     },
     {
       "id": "community.audiobook-torrents",
       "name": "Audiobook Torrents",
-      "version": "1.6.0",
+      "version": "1.7.0",
       "description": "Finds audiobooks on public indexers and plays the torrents in the app, with no account. Your IP address is visible to everyone sharing the book; a VPN is strongly advised.",
       "url": "audiobook-scraper/dist/audiobook-torrents.js"
+    },
+    {
+      "id": "community.golden-audiobooks",
+      "name": "Golden Audiobooks",
+      "version": "1.7.0",
+      "description": "Plays audiobooks from Golden Audiobooks, which streams them as MP3 files: no torrents and no account. Mostly popular English books.",
+      "url": "audiobook-scraper/dist/golden-audiobooks.js"
     }
   ]
 }

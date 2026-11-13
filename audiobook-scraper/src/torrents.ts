@@ -10,7 +10,7 @@ const extension = makeExtension({
   updateUrl:
     'https://raw.githubusercontent.com/mtgims/shu-extensions/main/audiobook-scraper/dist/audiobook-torrents.js',
   description:
-    'Finds audiobook torrents on AudioBook Bay, The Pirate Bay and RuTracker (through Knaben) and plays them directly, with no account. Your IP address is visible to everyone sharing the book; a VPN is strongly advised.',
+    'Finds audiobook torrents on AudioBook Bay, The Pirate Bay, Bitsearch and RuTor and plays them directly, with no account. Your IP address is visible to everyone sharing the book; a VPN is strongly advised.',
   notice:
     'Playing a torrent connects this device directly to the other people sharing the book, so your IP address is visible to all of them.\n\nHow fast a book starts and plays depends on how many people share it: a book few people share may be slow or not play at all.\n\nUsing a VPN is strongly advised.',
   settings: [

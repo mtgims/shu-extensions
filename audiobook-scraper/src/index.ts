@@ -12,7 +12,7 @@ const extension = makeExtension({
   updateUrl:
     'https://raw.githubusercontent.com/mtgims/shu-extensions/main/audiobook-scraper/dist/audiobook-scraper.js',
   description:
-    'Finds audiobook torrents on AudioBook Bay, The Pirate Bay and RuTracker (through Knaben), and plays them through Real-Debrid, AllDebrid, TorBox or Premiumize.',
+    'Finds audiobook torrents on AudioBook Bay, The Pirate Bay, Bitsearch and RuTor, and plays them through Real-Debrid, AllDebrid, TorBox or Premiumize.',
   settings: [
     { key: 'torbox', label: 'TorBox API key', type: 'password', help: debridHelp },
     { key: 'realdebrid', label: 'Real-Debrid API key', type: 'password', help: debridHelp },

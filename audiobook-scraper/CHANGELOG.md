@@ -1,6 +1,16 @@
 # Changelog
 
-Both extensions in this folder share their code and version.
+The extensions in this folder share their code and version.
+
+## 1.7.0 - 2026-11-13
+
+### New
+- Golden Audiobooks: plays books from goldenaudiobooks.com, which streams them as MP3
+  files, so there's no torrent, no account and no waiting for seeders. Search it, browse
+  what's new, or let it offer versions of catalog books
+
+### Fixed
+- The scraper descriptions still said RuTracker; they now name Bitsearch and RuTor
 
 ## 1.6.0 - 2026-11-06
 
