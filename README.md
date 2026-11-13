@@ -47,6 +47,19 @@ Settings:
 - **Minimum seeders**: hides results with few seeders
 - **Jackett / Prowlarr**: a Torznab URL and API key, to add any indexer they support
 
+## Audiobook Torrents
+
+The same search as the scraper, but Shu plays the torrents itself (Shu 0.6.0 or later): no
+account and no setup. Before installing it you accept a warning: your IP address is visible to
+everyone sharing the book, how fast a book starts depends on how many people share it, and a VPN
+is strongly advised.
+
+Settings:
+
+- **Download folder**, and whether to delete a book when you finish it
+- **Delete books not played for** and **Space for downloads**: older books go first
+- **Download and upload speed**, and whether to keep sharing while Shu is open
+
 ## Golden Audiobooks
 
 A source for books on [Golden Audiobooks](https://goldenaudiobooks.com), which streams them as
@@ -68,8 +81,9 @@ npm run lint         # biome
 npm run build        # dist/<name>.js
 ```
 
-When releasing, commit the rebuilt `dist/` file, bump `version` in `src/index.ts`, `package.json`
-and `index.json`, and add a line to the extension's `CHANGELOG.md`. The app picks up new versions
+When releasing, commit the rebuilt `dist/` file, bump the version in the source (`src/index.ts`
+for the catalog, `src/version.ts` for the extensions in `audiobook-scraper`, which share one
+version), `package.json` and `index.json`, and add a line to the extension's `CHANGELOG.md`. The app picks up new versions
 by itself. The extension API is described in the app's `docs/EXTENSIONS.md`.
 
 ## License
